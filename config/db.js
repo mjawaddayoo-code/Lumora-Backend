@@ -1,7 +1,16 @@
 import mongoose from 'mongoose';
 
+// Cached connection: required on serverless platforms (Vercel) where the function is re-invoked often.
+const cache = globalThis.__lumoraMongo || (globalThis.__lumoraMongo = { conn: null, promise: null });
+
 export default async function connectDB() {
-  mongoose.set('strictQuery', true);
-  const conn = await mongoose.connect(process.env.MONGO_URI);
-  console.log(`MongoDB connected: ${conn.connection.host}/${conn.connection.name}`);
+  if (cache.conn) return cache.conn;
+  if (!cache.promise) {
+    mongoose.set('strictQuery', true);
+    cache.promise = mongoose
+      .connect(process.env.MONGO_URI, { serverSelectionTimeoutMS: 8000 })
+      .catch((e) => { cache.promise = null; throw e; });
+  }
+  cache.conn = await cache.promise;
+  return cache.conn;
 }
