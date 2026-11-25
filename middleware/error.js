@@ -26,7 +26,7 @@ export const errorHandler = (err, _req, res, _next) => {
   if (status >= 500) console.error(err);
   res.status(status).json({
     success: false,
-    message: status >= 500 && process.env.NODE_ENV === 'production' ? 'Server error' : message,
+    message: status >= 500 && process.env.NODE_ENV === 'production' && process.env.DEBUG_ERRORS !== 'true' ? 'Server error (set DEBUG_ERRORS=true on the server to see details)' : message,
     ...(errors ? { errors } : {}),
   });
 };
